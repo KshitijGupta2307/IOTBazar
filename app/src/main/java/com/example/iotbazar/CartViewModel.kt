@@ -38,13 +38,15 @@ class CartViewModel : ViewModel() {
                 } else it
             }
         }
-
-        // Remove from added products if quantity becomes zero
-        _addedProducts.update { it - product.id }
     }
 
     fun removeFromCart(product: Product) {
         _cartItems.update { it.filter { cartItem -> cartItem.product.id != product.id } }
         _addedProducts.update { it - product.id } // Remove from added products set
+    }
+
+    fun clearCart() {  // ✅ Moved inside the class
+        _cartItems.value = emptyList()
+        _addedProducts.value = emptySet() // ✅ Reset addedProducts when clearing the cart
     }
 }

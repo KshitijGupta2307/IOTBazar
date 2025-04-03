@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -27,8 +28,21 @@ fun CartScreen(navController: NavHostController, cartViewModel: CartViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Your Cart", style = MaterialTheme.typography.titleLarge) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary)
+                title = {
+                    Text(
+                        "Your Cart",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary),
+                actions = {
+                    if (!isCartEmpty) {
+                        IconButton(onClick = { cartViewModel.clearCart() }) {
+                            Icon(Icons.Filled.Delete, contentDescription = "Clear Cart", tint = Color.White)
+                        }
+                    }
+                }
             )
         },
         bottomBar = {
@@ -69,7 +83,7 @@ fun CheckoutBar(navController: NavHostController, cartItems: List<CartItem>) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 4.dp
+        shadowElevation = 6.dp
     ) {
         Row(
             modifier = Modifier
@@ -81,7 +95,8 @@ fun CheckoutBar(navController: NavHostController, cartItems: List<CartItem>) {
             Text(
                 "Total: ₹${String.format("%.2f", totalPrice)}",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
             )
             Button(
                 onClick = { navController.navigate("checkout") },
@@ -96,8 +111,10 @@ fun CheckoutBar(navController: NavHostController, cartItems: List<CartItem>) {
 @Composable
 fun CartItemRow(cartItem: CartItem, cartViewModel: CartViewModel) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        elevation = CardDefaults.cardElevation(6.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
@@ -106,35 +123,74 @@ fun CartItemRow(cartItem: CartItem, cartViewModel: CartViewModel) {
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Product Image
             AsyncImage(
                 model = cartItem.product.imageUrl,
                 contentDescription = cartItem.product.name,
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(90.dp)
                     .background(MaterialTheme.colorScheme.secondaryContainer)
             )
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(cartItem.product.name, fontWeight = FontWeight.Bold)
-                Text("₹${cartItem.product.price} x ${cartItem.quantity}")
+                // Product Name
+                Text(
+                    text = cartItem.product.name,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                // Price & Quantity
+                Text(
+                    text = "₹${cartItem.product.price} x ${cartItem.quantity}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Quantity Controls
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(
+                        onClick = { cartViewModel.decreaseQuantity(cartItem.product) },
+                        enabled = cartItem.quantity > 1,
+                        contentPadding = PaddingValues(4.dp),
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Text("-", fontWeight = FontWeight.Bold)
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = cartItem.quantity.toString(),
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    OutlinedButton(
+                        onClick = { cartViewModel.addToCart(cartItem.product) },
+                        contentPadding = PaddingValues(4.dp),
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Text("+", fontWeight = FontWeight.Bold)
+                    }
+                }
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = { cartViewModel.decreaseQuantity(cartItem.product) },
-                    enabled = cartItem.quantity > 1
-                ) {
-                    Text("-", fontWeight = FontWeight.Bold)
-                }
-                Text(cartItem.quantity.toString(), fontWeight = FontWeight.Bold)
-                IconButton(onClick = { cartViewModel.addToCart(cartItem.product) }) {
-                    Text("+", fontWeight = FontWeight.Bold)
-                }
-                IconButton(onClick = { cartViewModel.removeFromCart(cartItem.product) }) {
-                    Icon(Icons.Filled.Delete, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error)
-                }
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Remove Button
+            IconButton(onClick = { cartViewModel.removeFromCart(cartItem.product) }) {
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "Remove",
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
         }
     }
@@ -147,7 +203,7 @@ fun EmptyCartUI(navController: NavHostController) {
         verticalArrangement = Arrangement.Center,
         modifier = Modifier.fillMaxSize()
     ) {
-        Text("Your cart is empty!", style = MaterialTheme.typography.titleMedium)
+        Text("Your cart is empty!", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = { navController.navigate("home") },
