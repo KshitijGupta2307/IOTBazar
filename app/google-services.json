@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "689525090024",
+    "project_id": "iotmart-f1ccf",
+    "storage_bucket": "iotmart-f1ccf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:689525090024:android:bba1c688750d9752640b5d",
+        "android_client_info": {
+          "package_name": "com.example.iotbazar"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "689525090024-mcinr517mhl7g2sd07iskaajajb6jju4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.iotbazar",
+            "certificate_hash": "2f5da72830504310e45c47c052217635961a4038"
+          }
+        },
+        {
+          "client_id": "689525090024-iugvhseb5i332l5rh7k9d38996oslp7g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArv_aW23RceGAC7uSs3mGDkWM7T68mToE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "689525090024-iugvhseb5i332l5rh7k9d38996oslp7g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
