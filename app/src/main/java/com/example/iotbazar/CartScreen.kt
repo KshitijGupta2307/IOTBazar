@@ -24,17 +24,12 @@ import com.example.iotbazar.BottomNavBar
 fun CartScreen(navController: NavHostController, cartViewModel: CartViewModel) {
     val cartItems by cartViewModel.cartItems.collectAsState()
     val isCartEmpty = cartItems.isEmpty()
+    var showDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        "Your Cart",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                },
+                title = { Text("Your Cart", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimary) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary),
                 actions = {
                     if (!isCartEmpty) {
@@ -47,7 +42,7 @@ fun CartScreen(navController: NavHostController, cartViewModel: CartViewModel) {
         },
         bottomBar = {
             Column {
-                if (!isCartEmpty) CheckoutBar(navController, cartItems)
+                if (!isCartEmpty) CheckoutBar(cartItems) { showDialog = true }
                 BottomNavBar(navController, "cart")
             }
         }
@@ -74,10 +69,21 @@ fun CartScreen(navController: NavHostController, cartViewModel: CartViewModel) {
             }
         }
     }
+
+    // Show checkout dialog when the button is clicked
+    if (showDialog) {
+        CheckoutDialog(
+            onDismiss = { showDialog = false },
+            onConfirm = { name, phone, whatsapp, address, email ->
+                showDialog = false
+                navController.navigate("orderConfirmation") // Proceed to order confirmation
+            }
+        )
+    }
 }
 
 @Composable
-fun CheckoutBar(navController: NavHostController, cartItems: List<CartItem>) {
+fun CheckoutBar(cartItems: List<CartItem>, onCheckoutClick: () -> Unit) {
     val totalPrice = cartItems.sumOf { it.product.price * it.quantity }
 
     Surface(
@@ -99,7 +105,7 @@ fun CheckoutBar(navController: NavHostController, cartItems: List<CartItem>) {
                 color = MaterialTheme.colorScheme.primary
             )
             Button(
-                onClick = { navController.navigate("checkout") },
+                onClick = onCheckoutClick,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text("Checkout")
@@ -123,7 +129,6 @@ fun CartItemRow(cartItem: CartItem, cartViewModel: CartViewModel) {
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Product Image
             AsyncImage(
                 model = cartItem.product.imageUrl,
                 contentDescription = cartItem.product.name,
@@ -135,23 +140,10 @@ fun CartItemRow(cartItem: CartItem, cartViewModel: CartViewModel) {
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                // Product Name
-                Text(
-                    text = cartItem.product.name,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                // Price & Quantity
-                Text(
-                    text = "₹${cartItem.product.price} x ${cartItem.quantity}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
+                Text(text = cartItem.product.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text(text = "₹${cartItem.product.price} x ${cartItem.quantity}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Quantity Controls
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedButton(
                         onClick = { cartViewModel.decreaseQuantity(cartItem.product) },
@@ -164,11 +156,7 @@ fun CartItemRow(cartItem: CartItem, cartViewModel: CartViewModel) {
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    Text(
-                        text = cartItem.quantity.toString(),
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    Text(text = cartItem.quantity.toString(), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
 
                     Spacer(modifier = Modifier.width(8.dp))
 
@@ -184,13 +172,8 @@ fun CartItemRow(cartItem: CartItem, cartViewModel: CartViewModel) {
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Remove Button
             IconButton(onClick = { cartViewModel.removeFromCart(cartItem.product) }) {
-                Icon(
-                    Icons.Filled.Delete,
-                    contentDescription = "Remove",
-                    tint = MaterialTheme.colorScheme.error
-                )
+                Icon(Icons.Filled.Delete, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error)
             }
         }
     }
@@ -212,4 +195,58 @@ fun EmptyCartUI(navController: NavHostController) {
             Text("Start Shopping")
         }
     }
+}
+
+@Composable
+fun CheckoutDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, String, String, String, String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var whatsapp by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Enter Shipment Details", style = MaterialTheme.typography.titleLarge) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                CheckoutTextField(value = name, label = "Name") { name = it }
+                CheckoutTextField(value = phone, label = "Phone Number") { phone = it }
+                CheckoutTextField(value = whatsapp, label = "WhatsApp Number") { whatsapp = it }
+                CheckoutTextField(value = address, label = "Address", maxLines = 2) { address = it }
+                CheckoutTextField(value = email, label = "Email ID") { email = it }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (name.isNotEmpty() && phone.isNotEmpty() && address.isNotEmpty()) {
+                        onConfirm(name, phone, whatsapp, address, email)
+                    }
+                },
+                enabled = name.isNotEmpty() && phone.isNotEmpty() && address.isNotEmpty()
+            ) {
+                Text("Proceed to payment ")
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun CheckoutTextField(value: String, label: String, maxLines: Int = 1, onValueChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        singleLine = maxLines == 1,
+        maxLines = maxLines
+    )
 }

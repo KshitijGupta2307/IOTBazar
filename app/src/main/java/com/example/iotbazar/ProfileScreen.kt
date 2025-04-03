@@ -116,7 +116,7 @@ fun ProfileScreen(navController: NavController) {
 
             // WhatsApp Contact Button
             Button(
-                onClick = { openWhatsApp(context, "8679******") }, // ✅ WhatsApp Number
+                onClick = { openWhatsApp(context, "") }, // ✅ WhatsApp Number
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -153,7 +153,7 @@ fun CustomEmailButton(label: String, icon: ImageVector, email: String, subject: 
 
 // ✅ Function to Open WhatsApp Chat
 private fun openWhatsApp(context: Context, phoneNumber: String) {
-    val formattedNumber = "+918679930799" // Ensure country code is included
+    val formattedNumber = "+917831864073" // Ensure country code is included
     val intent = Intent(Intent.ACTION_VIEW).apply {
         data = android.net.Uri.parse("https://wa.me/$formattedNumber")
     }
