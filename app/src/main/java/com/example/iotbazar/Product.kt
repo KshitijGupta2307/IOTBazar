@@ -1,8 +1,10 @@
 package com.example.iotbazaar.viewmodel
 
+import com.google.gson.annotations.SerializedName
+
 data class Product(
-    val id: String,
+    @SerializedName("_id") val id: String,  // ✅ Maps MongoDB "_id" to Kotlin "id"
     val name: String,
-    val price: Double,
-    val imageUrl: String
+    @SerializedName("imageUrl") val imageUrl: String,
+    val price: Double
 )

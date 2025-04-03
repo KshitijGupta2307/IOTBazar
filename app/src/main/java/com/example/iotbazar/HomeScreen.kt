@@ -1,7 +1,7 @@
 package com.example.iotbazaar.ui.screens.home
 
 import android.util.Log
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -21,23 +21,22 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.iotbazaar.viewmodel.CartViewModel
-import com.example.iotbazaar.viewmodel.Product
 import com.example.iotbazar.BottomNavBar
 import com.google.accompanist.swiperefresh.*
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
+import com.example.iotbazaar.viewmodel.Product
 
 private const val BASE_URL = "http://192.168.243.92:8080/api/"
 
-// API Service
+// ✅ API Service Interface
 interface ProductService {
     @GET("products")
     suspend fun getProducts(): List<Product>
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController, cartViewModel: CartViewModel) {
     val products = remember { mutableStateListOf<Product>() }
@@ -48,6 +47,7 @@ fun HomeScreen(navController: NavController, cartViewModel: CartViewModel) {
     val scope = rememberCoroutineScope()
     val refreshState = rememberSwipeRefreshState(isRefreshing = isLoading)
 
+    // ✅ Fetch Products Function
     fun fetchProducts() {
         scope.launch {
             isLoading = true
@@ -58,8 +58,11 @@ fun HomeScreen(navController: NavController, cartViewModel: CartViewModel) {
                     .build()
                     .create(ProductService::class.java)
 
+                val fetchedProducts = api.getProducts()
+                Log.d("PRODUCT_FETCH", "Products: $fetchedProducts")
+
                 products.clear()
-                products.addAll(api.getProducts())
+                products.addAll(fetchedProducts)
                 isError = false
             } catch (e: Exception) {
                 Log.e("API_ERROR", "Failed to fetch products: ${e.message}")
@@ -70,6 +73,7 @@ fun HomeScreen(navController: NavController, cartViewModel: CartViewModel) {
         }
     }
 
+    // ✅ Fetch Products on Screen Load
     LaunchedEffect(Unit) { fetchProducts() }
 
     Scaffold(
@@ -108,6 +112,7 @@ fun HomeScreen(navController: NavController, cartViewModel: CartViewModel) {
     }
 }
 
+// ✅ Product Grid (Displays Products in 2x2 Grid)
 @Composable
 fun ProductGrid(products: List<Product>, cartViewModel: CartViewModel) {
     LazyVerticalGrid(
@@ -122,22 +127,25 @@ fun ProductGrid(products: List<Product>, cartViewModel: CartViewModel) {
     }
 }
 
-
+// ✅ No Products Found Message
 @Composable
 fun NoProductsFound() {
     Text("🚫 No products found.", color = MaterialTheme.colorScheme.error)
 }
 
+// ✅ Retry Button
 @Composable
 fun RetrySection(onRetry: () -> Unit) {
     Button(onClick = onRetry) { Text("Retry") }
 }
 
+// ✅ Empty State UI
 @Composable
 fun EmptyState() {
     Text("📭 No products available.", color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
+// ✅ Top Bar with Search & Cart
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeTopAppBar(
@@ -187,10 +195,12 @@ fun HomeTopAppBar(
     )
 }
 
-
 @Composable
 fun ProductCard(product: Product, cartViewModel: CartViewModel) {
-    var isAddedToCart by remember { mutableStateOf(false) } // Track state for individual product
+    val addedProducts by cartViewModel.addedProducts.collectAsState()
+
+    // Use hashCode() to check if a product is already added
+    val isAdded = addedProducts.any { it.hashCode() == product.hashCode() }
 
     Card(
         Modifier
@@ -225,19 +235,11 @@ fun ProductCard(product: Product, cartViewModel: CartViewModel) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
-                onClick = {
-                    cartViewModel.addToCart(product)
-                    isAddedToCart = true // Disable button after adding product
-                },
-                enabled = !isAddedToCart, // Only this product's button is disabled
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isAddedToCart) Color.Gray else MaterialTheme.colorScheme.primary
-                )
+                onClick = { cartViewModel.addToCart(product) },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                enabled = !isAdded
             ) {
-                Text(
-                    text = if (isAddedToCart) "Added" else "Add to Cart",
-                    color = Color.White
-                )
+                Text(if (isAdded) "Added" else "Add to Cart", color = Color.White)
             }
         }
     }
