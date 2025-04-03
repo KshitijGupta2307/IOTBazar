@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import com.example.iotbazaar.viewmodel.CartViewModel
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -26,7 +27,8 @@ fun MainScreen() {
         AppNavigation(
             navController = navController,
             modifier = Modifier.padding(paddingValues),
-            isLoggedIn = isLoggedIn // ✅ Pass 'isLoggedIn' properly
+            isLoggedIn = isLoggedIn,
+            cartViewModel =CartViewModel() // ✅ Pass 'isLoggedIn' properly
         )
     }
 }

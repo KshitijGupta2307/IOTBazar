@@ -93,6 +93,7 @@ dependencies {
     implementation ("com.google.code.gson:gson:2.9.0")
     implementation ("com.squareup.okhttp3:okhttp:4.9.0")
     implementation ("com.google.accompanist:accompanist-swiperefresh:0.24.13-rc")
+    implementation ("androidx.compose.material3:material3:1.")
 
 }
 
