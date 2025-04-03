@@ -197,10 +197,10 @@ fun HomeTopAppBar(
 
 @Composable
 fun ProductCard(product: Product, cartViewModel: CartViewModel) {
-    val addedProducts by cartViewModel.addedProducts.collectAsState()
+    val cartItems by cartViewModel.cartItems.collectAsState()
 
-    // Use hashCode() to check if a product is already added
-    val isAdded = addedProducts.any { it.hashCode() == product.hashCode() }
+    // ✅ Check if the product is already in the cart based on its ID
+    val isAdded = cartItems.any { it.product.id == product.id }
 
     Card(
         Modifier
@@ -237,7 +237,7 @@ fun ProductCard(product: Product, cartViewModel: CartViewModel) {
             Button(
                 onClick = { cartViewModel.addToCart(product) },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                enabled = !isAdded
+                enabled = !isAdded // ✅ Button stays disabled after adding
             ) {
                 Text(if (isAdded) "Added" else "Add to Cart", color = Color.White)
             }
