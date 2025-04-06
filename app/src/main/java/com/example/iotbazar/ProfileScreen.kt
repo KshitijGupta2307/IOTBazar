@@ -2,6 +2,7 @@ package com.example.iotbazar
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -94,7 +95,7 @@ fun ProfileScreen(navController: NavController) {
 
             // Tagline
             Text(
-                text = "🚀 We provide ready-to-use projects!\nClick on 'Custom Project' to explore.\nContact us using email and whatsapp only.",
+                text = "🚀 We provide ready-to-use projects!\nClick on 'Custom Project' to explore.\nContact us using email and WhatsApp only.",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary,
@@ -116,15 +117,15 @@ fun ProfileScreen(navController: NavController) {
 
             // WhatsApp Contact Button
             Button(
-                onClick = { openWhatsApp(context, "") }, // ✅ WhatsApp Number
+                onClick = { openWhatsApp(context, "+917831864073") }, // ✅ WhatsApp Number
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary) // ✅ Theme Color
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.whatsapp), // ✅ WhatsApp Logo from Drawable
+                    painter = painterResource(id = R.drawable.whatsapp), // ✅ Ensure this drawable exists
                     contentDescription = "WhatsApp",
                     modifier = Modifier
                         .size(24.dp)
@@ -144,7 +145,7 @@ fun CustomEmailButton(label: String, icon: ImageVector, email: String, subject: 
             .fillMaxWidth()
             .height(50.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary) // ✅ Theme Color
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
         Icon(icon, contentDescription = label, modifier = Modifier.padding(end = 8.dp))
         Text(label)
@@ -153,9 +154,8 @@ fun CustomEmailButton(label: String, icon: ImageVector, email: String, subject: 
 
 // ✅ Function to Open WhatsApp Chat
 private fun openWhatsApp(context: Context, phoneNumber: String) {
-    val formattedNumber = "+917831864073" // Ensure country code is included
     val intent = Intent(Intent.ACTION_VIEW).apply {
-        data = android.net.Uri.parse("https://wa.me/$formattedNumber")
+        data = Uri.parse("https://wa.me/${phoneNumber.replace("+", "")}")
     }
     try {
         context.startActivity(intent)
@@ -164,11 +164,10 @@ private fun openWhatsApp(context: Context, phoneNumber: String) {
     }
 }
 
-// ✅ Function to Send Email
+// ✅ Improved Email Intent — opens only email apps
 private fun sendEmail(context: Context, to: String, subject: String, body: String) {
-    val intent = Intent(Intent.ACTION_SEND).apply {
-        type = "message/rfc822"
-        putExtra(Intent.EXTRA_EMAIL, arrayOf(to))
+    val uri = Uri.parse("mailto:$to")
+    val intent = Intent(Intent.ACTION_SENDTO, uri).apply {
         putExtra(Intent.EXTRA_SUBJECT, subject)
         putExtra(Intent.EXTRA_TEXT, body)
     }

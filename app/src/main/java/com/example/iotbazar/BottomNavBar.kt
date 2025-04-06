@@ -14,7 +14,7 @@ fun BottomNavBar(navController: NavController, currentRoute: String) {
     NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
         NavigationBarItem(
             icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
-            label = { if (currentRoute != "cart") Text("Home") }, // ❌ Hide text in Cart screen
+            label = { Text("Home") },
             selected = currentRoute == "home",
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -22,12 +22,20 @@ fun BottomNavBar(navController: NavController, currentRoute: String) {
                 unselectedIconColor = Color.Gray,
                 unselectedTextColor = Color.Gray
             ),
-            onClick = { if (currentRoute != "home") navController.navigate("home") }
+            onClick = {
+                if (currentRoute != "home") {
+                    navController.navigate("home") {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = false }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            }
         )
 
         NavigationBarItem(
             icon = { Icon(Icons.Filled.ShoppingCart, contentDescription = "Cart") },
-            label = { if (currentRoute != "cart") Text("Cart") }, // ❌ Hide text when Cart is selected
+            label = { Text("Cart") },
             selected = currentRoute == "cart",
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -35,12 +43,20 @@ fun BottomNavBar(navController: NavController, currentRoute: String) {
                 unselectedIconColor = Color.Gray,
                 unselectedTextColor = Color.Gray
             ),
-            onClick = { if (currentRoute != "cart") navController.navigate("cart") }
+            onClick = {
+                if (currentRoute != "cart") {
+                    navController.navigate("cart") {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = false }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            }
         )
 
         NavigationBarItem(
             icon = { Icon(Icons.Filled.AccountCircle, contentDescription = "Profile") },
-            label = { if (currentRoute != "cart") Text("Profile") }, // ❌ Hide text in Cart screen
+            label = { Text("Profile") },
             selected = currentRoute == "profile",
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -48,7 +64,15 @@ fun BottomNavBar(navController: NavController, currentRoute: String) {
                 unselectedIconColor = Color.Gray,
                 unselectedTextColor = Color.Gray
             ),
-            onClick = { if (currentRoute != "profile") navController.navigate("profile") }
+            onClick = {
+                if (currentRoute != "profile") {
+                    navController.navigate("profile") {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = false }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            }
         )
     }
 }

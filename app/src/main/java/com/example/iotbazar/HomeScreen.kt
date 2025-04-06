@@ -2,10 +2,13 @@ package com.example.iotbazaar.ui.screens.home
 
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -13,12 +16,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.example.iotbazaar.viewmodel.CartViewModel
 import com.example.iotbazar.BottomNavBar
@@ -29,7 +36,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import com.example.iotbazaar.viewmodel.Product
 
-private const val BASE_URL = "http://192.168.243.92:8080/api/"
+private const val BASE_URL = "http://192.168.208.92:8080/api/"
 
 // ✅ API Service Interface
 interface ProductService {
@@ -194,27 +201,32 @@ fun HomeTopAppBar(
         }
     )
 }
-
 @Composable
-fun ProductCard(product: Product, cartViewModel: CartViewModel) {
+fun ProductCard(
+    product: Product,
+    cartViewModel: CartViewModel
+) {
     val cartItems by cartViewModel.cartItems.collectAsState()
+    val context = LocalContext.current
 
-    // ✅ Check if the product is already in the cart based on its ID
+    var showImageDialog by remember { mutableStateOf(false) }
+
     val isAdded = cartItems.any { it.product.id == product.id }
 
     Card(
-        Modifier
+        modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(8.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(
-            Modifier.padding(12.dp),
+            modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
+            // 👉 Clickable image triggers full-screen preview
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(context)
                     .data(
                         if (product.imageUrl.startsWith("http")) product.imageUrl
                         else "$BASE_URL${product.imageUrl.trimStart('/')}"
@@ -222,9 +234,11 @@ fun ProductCard(product: Product, cartViewModel: CartViewModel) {
                     .crossfade(true)
                     .build(),
                 contentDescription = product.name,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(140.dp)
-                    .padding(4.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { showImageDialog = true }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -237,9 +251,32 @@ fun ProductCard(product: Product, cartViewModel: CartViewModel) {
             Button(
                 onClick = { cartViewModel.addToCart(product) },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                enabled = !isAdded // ✅ Button stays disabled after adding
+                enabled = !isAdded
             ) {
                 Text(if (isAdded) "Added" else "Add to Cart", color = Color.White)
+            }
+        }
+    }
+
+    // 👉 Image Dialog (Fullscreen View)
+    if (showImageDialog) {
+        Dialog(onDismissRequest = { showImageDialog = false }) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+                    .clickable { showImageDialog = false },
+                contentAlignment = Alignment.Center
+            ) {
+                SubcomposeAsyncImage(
+                    model = product.imageUrl,
+                    contentDescription = "Full image of ${product.name}",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                )
             }
         }
     }

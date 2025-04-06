@@ -94,6 +94,7 @@ dependencies {
     implementation ("com.squareup.okhttp3:okhttp:4.9.0")
     implementation ("com.google.accompanist:accompanist-swiperefresh:0.24.13-rc")
     implementation ("androidx.compose.material3:material3:1.")
+    implementation ("com.razorpay:checkout:1.6.33")
 
 }
 
