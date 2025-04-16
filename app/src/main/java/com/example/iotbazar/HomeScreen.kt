@@ -36,7 +36,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import com.example.iotbazaar.viewmodel.Product
 
-private const val BASE_URL = "http://192.168.208.92:8080/api/"
+private const val BASE_URL = "http://192.168.31.93/api/"
 
 // ✅ API Service Interface
 interface ProductService {

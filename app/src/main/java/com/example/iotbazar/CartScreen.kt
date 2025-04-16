@@ -23,9 +23,7 @@ import com.example.iotbazaar.Constants.BASE_URL
 import com.example.iotbazaar.viewmodel.CartItem
 import com.example.iotbazaar.viewmodel.CartViewModel
 import com.example.iotbazar.BottomNavBar
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -40,7 +38,6 @@ fun CartScreen(navController: NavHostController, cartViewModel: CartViewModel) {
     val context = LocalContext.current
     val cartItems by cartViewModel.cartItems.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
-    val baseUrl = BASE_URL
 
     Scaffold(
         topBar = {
@@ -64,11 +61,11 @@ fun CartScreen(navController: NavHostController, cartViewModel: CartViewModel) {
                 BottomNavBar(navController, "cart")
             }
         }
-    ) { paddingValues ->
+    ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .padding(padding),
             contentAlignment = if (cartItems.isEmpty()) Alignment.Center else Alignment.TopStart
         ) {
             if (cartItems.isEmpty()) {
@@ -80,8 +77,8 @@ fun CartScreen(navController: NavHostController, cartViewModel: CartViewModel) {
                         .padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(cartItems) { cartItem ->
-                        CartItemRow(cartItem, cartViewModel)
+                    items(cartItems) { item ->
+                        CartItemRow(item, cartViewModel)
                     }
                 }
             }
@@ -103,15 +100,14 @@ fun CartScreen(navController: NavHostController, cartViewModel: CartViewModel) {
                     phone = phone,
                     address = address,
                     email = email,
-                    baseUrl = baseUrl,
-                    paymentMethod = "UPI",
-                    onSuccess = {}
+                    baseUrl = "http://192.168.204.92:8080",
+                    paymentMethod = "UPI"
                 )
 
                 launchUPIPayment(
                     context = context,
                     name = name,
-                    upiId = "8679930799@okbizaxis",
+                    upiId = "guptakshitij266@oksbi",
                     amount = totalAmount.toString()
                 )
             }
@@ -133,7 +129,7 @@ fun EmptyCartUI(navController: NavHostController) {
 @Composable
 fun CheckoutBar(cartItems: List<CartItem>, onCheckoutClick: () -> Unit) {
     val total = cartItems.sumOf { it.product.price * it.quantity }
-    Surface(shadowElevation = 8.dp) {
+    Surface(shadowElevation = 6.dp) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -165,10 +161,7 @@ fun CheckoutDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            Button(
-                onClick = { onConfirm(name, phone, address, email) },
-                enabled = isFormValid
-            ) {
+            Button(onClick = { onConfirm(name, phone, address, email) }, enabled = isFormValid) {
                 Text("Proceed to Payment")
             }
         },
@@ -197,11 +190,10 @@ fun submitOrderToBackend(
     address: String,
     email: String,
     baseUrl: String,
-    paymentMethod: String = "UPI",
-    onSuccess: () -> Unit
+    paymentMethod: String
 ) {
-    val totalAmount = cartItems.sumOf { it.product.price * it.quantity }
     val orderId = UUID.randomUUID().toString()
+    val totalAmount = cartItems.sumOf { it.product.price * it.quantity }
 
     val itemsArray = JSONArray().apply {
         cartItems.forEach {
@@ -230,40 +222,24 @@ fun submitOrderToBackend(
         .post(requestBody)
         .build()
 
-    val client = OkHttpClient()
-    CoroutineScope(Dispatchers.IO).launch {
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                showToast(context, "❌ Failed to place order")
-            }
+    OkHttpClient().newCall(request).enqueue(object : Callback {
+        override fun onFailure(call: Call, e: IOException) {
+            showToast(context, "❌ Failed to place order")
+        }
 
-            override fun onResponse(call: Call, response: Response) {
-                if (response.isSuccessful) {
-                    CoroutineScope(Dispatchers.Main).launch {
-                        showToast(context, "✅ Order placed successfully")
-                        onSuccess()
-                    }
-                } else {
-                    showToast(context, "❌ Server error: ${response.message}")
+        override fun onResponse(call: Call, response: Response) {
+            if (response.isSuccessful) {
+                CoroutineScope(Dispatchers.Main).launch {
+                    showToast(context, "✅ Order placed successfully")
                 }
+            } else {
+                showToast(context, "❌ Error: ${response.message}")
             }
-        })
-    }
+        }
+    })
 }
 
-fun showToast(context: Context, message: String) {
-    CoroutineScope(Dispatchers.Main).launch {
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-    }
-}
-
-fun launchUPIPayment(
-    context: Context,
-    name: String,
-    upiId: String,
-    amount: String,
-    note: String = "Payment for IoT Bazaar Order"
-) {
+fun launchUPIPayment(context: Context, name: String, upiId: String, amount: String, note: String = "IoT Bazaar Payment") {
     val uri = Uri.Builder()
         .scheme("upi")
         .authority("pay")
@@ -274,7 +250,7 @@ fun launchUPIPayment(
         .appendQueryParameter("cu", "INR")
         .build()
 
-    val intent = Intent(Intent.ACTION_VIEW).apply { data = uri }
+    val intent = Intent(Intent.ACTION_VIEW, uri)
     val chooser = Intent.createChooser(intent, "Pay with")
 
     try {
@@ -284,12 +260,16 @@ fun launchUPIPayment(
     }
 }
 
+fun showToast(context: Context, message: String) {
+    CoroutineScope(Dispatchers.Main).launch {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+}
+
 @Composable
 fun CartItemRow(cartItem: CartItem, cartViewModel: CartViewModel) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(6.dp),
+        modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
@@ -304,34 +284,30 @@ fun CartItemRow(cartItem: CartItem, cartViewModel: CartViewModel) {
                 contentDescription = cartItem.product.name,
                 modifier = Modifier.size(80.dp)
             )
-
             Spacer(modifier = Modifier.width(12.dp))
-
             Column(modifier = Modifier.weight(1f)) {
                 Text(cartItem.product.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Text("₹${cartItem.product.price} x ${cartItem.quantity}", color = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.height(6.dp))
-
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedButton(
                         onClick = { cartViewModel.decreaseQuantity(cartItem.product) },
                         enabled = cartItem.quantity > 1
-                    ) { Text("-") }
-
+                    ) {
+                        Text("-")
+                    }
                     Text(
                         text = cartItem.quantity.toString(),
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
-
                     OutlinedButton(onClick = { cartViewModel.addToCart(cartItem.product) }) {
                         Text("+")
                     }
                 }
             }
-
             IconButton(onClick = { cartViewModel.removeFromCart(cartItem.product) }) {
-                Icon(Icons.Filled.Delete, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error)
+                Icon(Icons.Default.Delete, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error)
             }
         }
     }
