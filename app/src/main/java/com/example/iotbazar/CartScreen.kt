@@ -100,7 +100,7 @@ fun CartScreen(navController: NavHostController, cartViewModel: CartViewModel) {
                     phone = phone,
                     address = address,
                     email = email,
-                    baseUrl = "http://192.168.204.92:8080",
+                    baseUrl = "http://192.168.244.92:8080",
                     paymentMethod = "UPI"
                 )
 

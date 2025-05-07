@@ -1,7 +1,6 @@
 package com.example.iotbazaar.ui.screens.home
 
 import android.util.Log
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,9 +8,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,11 +20,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.example.iotbazaar.viewmodel.CartViewModel
@@ -36,9 +34,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import com.example.iotbazaar.viewmodel.Product
 
-private const val BASE_URL = "http://192.168.31.93/api/"
+private const val BASE_URL = "http://192.168.244.92:8080/api/"
 
-// ✅ API Service Interface
 interface ProductService {
     @GET("products")
     suspend fun getProducts(): List<Product>
@@ -54,7 +51,6 @@ fun HomeScreen(navController: NavController, cartViewModel: CartViewModel) {
     val scope = rememberCoroutineScope()
     val refreshState = rememberSwipeRefreshState(isRefreshing = isLoading)
 
-    // ✅ Fetch Products Function
     fun fetchProducts() {
         scope.launch {
             isLoading = true
@@ -66,8 +62,6 @@ fun HomeScreen(navController: NavController, cartViewModel: CartViewModel) {
                     .create(ProductService::class.java)
 
                 val fetchedProducts = api.getProducts()
-                Log.d("PRODUCT_FETCH", "Products: $fetchedProducts")
-
                 products.clear()
                 products.addAll(fetchedProducts)
                 isError = false
@@ -80,13 +74,15 @@ fun HomeScreen(navController: NavController, cartViewModel: CartViewModel) {
         }
     }
 
-    // ✅ Fetch Products on Screen Load
     LaunchedEffect(Unit) { fetchProducts() }
 
     Scaffold(
         topBar = {
             HomeTopAppBar(
-                navController, cartViewModel, searchQuery, isSearchActive,
+                navController,
+                cartViewModel,
+                searchQuery,
+                isSearchActive,
                 onSearchQueryChanged = { searchQuery = it },
                 onSearchToggle = { isSearchActive = it }
             )
@@ -105,8 +101,9 @@ fun HomeScreen(navController: NavController, cartViewModel: CartViewModel) {
                     isError -> RetrySection { fetchProducts() }
                     products.isEmpty() -> EmptyState()
                     else -> {
-                        val filteredProducts =
-                            products.filter { it.name.contains(searchQuery, ignoreCase = true) }
+                        val filteredProducts = products.filter {
+                            it.name.contains(searchQuery, ignoreCase = true)
+                        }
                         if (filteredProducts.isEmpty()) {
                             NoProductsFound()
                         } else {
@@ -119,40 +116,6 @@ fun HomeScreen(navController: NavController, cartViewModel: CartViewModel) {
     }
 }
 
-// ✅ Product Grid (Displays Products in 2x2 Grid)
-@Composable
-fun ProductGrid(products: List<Product>, cartViewModel: CartViewModel) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp)
-    ) {
-        items(products) { product ->
-            ProductCard(product, cartViewModel)
-        }
-    }
-}
-
-// ✅ No Products Found Message
-@Composable
-fun NoProductsFound() {
-    Text("🚫 No products found.", color = MaterialTheme.colorScheme.error)
-}
-
-// ✅ Retry Button
-@Composable
-fun RetrySection(onRetry: () -> Unit) {
-    Button(onClick = onRetry) { Text("Retry") }
-}
-
-// ✅ Empty State UI
-@Composable
-fun EmptyState() {
-    Text("📭 No products available.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-}
-
-// ✅ Top Bar with Search & Cart
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeTopAppBar(
@@ -168,19 +131,38 @@ fun HomeTopAppBar(
 
     TopAppBar(
         title = {
-            AnimatedVisibility(visible = isSearchActive) {
-                BasicTextField(
+            if (isSearchActive) {
+                OutlinedTextField(
                     value = searchQuery,
                     onValueChange = onSearchQueryChanged,
-                    textStyle = TextStyle(color = Color.White),
-                    modifier = Modifier.fillMaxWidth()
+                    placeholder = { Text("Search products…", color = Color.White.copy(alpha = 0.6f)) },
+                    leadingIcon = {
+                        Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.White)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 8.dp),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.White,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                        cursorColor = Color.White,
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedLeadingIconColor = Color.White,
+                        unfocusedLeadingIconColor = Color.White,
+                        focusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                        unfocusedPlaceholderColor = Color.White.copy(alpha = 0.4f)
+                    )
                 )
-            }
-            AnimatedVisibility(visible = !isSearchActive) {
+            } else {
                 Text("IoT Bazaar", color = MaterialTheme.colorScheme.onPrimary)
             }
         },
-        colors = TopAppBarDefaults.mediumTopAppBarColors(containerColor = MaterialTheme.colorScheme.primary),
+        colors = TopAppBarDefaults.mediumTopAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primary
+        ),
         actions = {
             IconButton(onClick = { onSearchToggle(!isSearchActive) }) {
                 Icon(
@@ -201,30 +183,44 @@ fun HomeTopAppBar(
         }
     )
 }
+
 @Composable
-fun ProductCard(
-    product: Product,
-    cartViewModel: CartViewModel
-) {
+fun ProductGrid(products: List<Product>, cartViewModel: CartViewModel) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        contentPadding = PaddingValues(8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(products) { product ->
+            ProductCard(product, cartViewModel)
+        }
+    }
+}
+
+@Composable
+fun ProductCard(product: Product, cartViewModel: CartViewModel) {
     val cartItems by cartViewModel.cartItems.collectAsState()
     val context = LocalContext.current
-
     var showImageDialog by remember { mutableStateOf(false) }
-
     val isAdded = cartItems.any { it.product.id == product.id }
 
     Card(
         modifier = Modifier
-            .padding(8.dp)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp)),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 👉 Clickable image triggers full-screen preview
             SubcomposeAsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(
@@ -240,12 +236,9 @@ fun ProductCard(
                     .clip(RoundedCornerShape(12.dp))
                     .clickable { showImageDialog = true }
             )
-
             Spacer(modifier = Modifier.height(8.dp))
-
             Text(product.name, style = MaterialTheme.typography.titleMedium)
             Text("₹${product.price}", style = MaterialTheme.typography.bodyMedium)
-
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
@@ -258,13 +251,12 @@ fun ProductCard(
         }
     }
 
-    // 👉 Image Dialog (Fullscreen View)
     if (showImageDialog) {
         Dialog(onDismissRequest = { showImageDialog = false }) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black)
+                    .background(Color.Black.copy(alpha = 0.95f))
                     .clickable { showImageDialog = false },
                 contentAlignment = Alignment.Center
             ) {
@@ -280,4 +272,25 @@ fun ProductCard(
             }
         }
     }
+}
+
+@Composable
+fun RetrySection(onRetry: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("Failed to load products.", color = MaterialTheme.colorScheme.error)
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = onRetry) {
+            Text("Retry")
+        }
+    }
+}
+
+@Composable
+fun NoProductsFound() {
+    Text("🚫 No products found.", color = MaterialTheme.colorScheme.error)
+}
+
+@Composable
+fun EmptyState() {
+    Text("📭 No products available.", color = MaterialTheme.colorScheme.onSurfaceVariant)
 }

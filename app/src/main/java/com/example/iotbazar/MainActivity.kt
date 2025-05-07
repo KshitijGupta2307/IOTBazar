@@ -8,21 +8,31 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.iotbazaar.viewmodel.CartViewModel
-import com.example.iotbazar.ui.theme.AppTheme
+import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.material3.MaterialTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val isLoggedIn = FirebaseAuth.getInstance().currentUser != null
+
         setContent {
             val navController = rememberNavController()
-            val cartViewModel: CartViewModel = viewModel()  // ✅ Shared ViewModel instance
+            val cartViewModel: CartViewModel = viewModel()
 
-            AppNavigation(
-                navController = navController,
-                modifier = Modifier.fillMaxSize(),
-                isLoggedIn = true,  // Replace with actual login check
-                cartViewModel = cartViewModel  // ✅ Pass the shared ViewModel
-            )
+            MaterialTheme(
+                colorScheme = MaterialTheme.colorScheme,  // Ensuring the theme color scheme
+                typography = MaterialTheme.typography,    // Ensuring the typography
+                shapes = MaterialTheme.shapes            // Ensuring the shape styles
+            ) {
+                AppNavigation(
+                    navController = navController,
+                    modifier = Modifier.fillMaxSize(),
+                    isLoggedIn = isLoggedIn,
+                    cartViewModel = cartViewModel
+                )
+            }
         }
     }
 }
