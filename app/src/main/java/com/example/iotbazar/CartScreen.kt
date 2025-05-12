@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
-import com.example.iotbazaar.Constants.BASE_URL
 import com.example.iotbazaar.viewmodel.CartItem
 import com.example.iotbazaar.viewmodel.CartViewModel
 import com.example.iotbazar.BottomNavBar
@@ -100,7 +99,7 @@ fun CartScreen(navController: NavHostController, cartViewModel: CartViewModel) {
                     phone = phone,
                     address = address,
                     email = email,
-                    baseUrl = "http://192.168.244.92:8080",
+                    baseUrl = "http://192.168.109.92:8080",
                     paymentMethod = "UPI"
                 )
 
